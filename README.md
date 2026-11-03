@@ -12,12 +12,13 @@ The first time, Windows may show "Windows protected your PC" because the app isn
 
 1. Double-click `SubSkyLoader.exe`.
 2. Choose today's GT Trips file (.xlsx or .csv).
-3. It saves, next to that file:
-   - a `.csv` copy (when you picked an .xlsx)
-   - the loader, e.g. `Sub Sky 4th.xlsx` (named from the file name)
+3. A **Save As** window opens with a suggested name (e.g. `Sub Sky 4th.xlsx`) next to your trips file. Change the folder or the file name if you want, then click **Save**.
+   - The sheet inside is named after the file you save.
+   - When you picked an .xlsx, a `.csv` copy is saved in the same folder.
+   - The app remembers the last folder you saved to.
 4. Open the loader, or convert another file.
 
-If a loader with that name is already open in Excel, it saves as `Sub Sky 4th (2).xlsx` instead.
+If the file you're saving over is open in Excel, it tells you to close it or pick another name.
 
 ## What it does
 
