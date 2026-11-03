@@ -10,8 +10,8 @@ import os
 import re
 import sys
 
-from openpyxl import Workbook, load_workbook
-from openpyxl.worksheet.table import Table, TableStyleInfo
+import xlsxwriter
+from openpyxl import load_workbook
 
 COLUMNS = ["Has Note", "Booking Id", "Provider Name", "Client Name", "Pickup Time", "Appt Time",
            "Pickup Polygon", "Phone Pickup", "Origin", "State (orig)", "Dropoff Polygon", "Phone Dropoff",
@@ -227,7 +227,7 @@ def convert(grid):
                          fmt_time(field(r, ["Requested PickUp Time", "P/U Time"])), None, POLYGON, phone,
                          field(r, ["Pickup Address", "P/U Address"]), "NH", POLYGON, phone,
                          field(r, ["Dropoff Address", "D/O Address"]), "NH", "SUB",
-                         num(field(r, ["Estimated Miles"])), "CLI1", "TL1", 0, 0, 0,
+                         field(r, ["Estimated Miles"]), "CLI1", "TL1", 0, 0, 0,
                          field(r, ["Seating Need"]), field(r, ["Leg Notes"]), None, None, 10])
         else:
             notes = field(r, ["VA Notes"])
@@ -235,7 +235,7 @@ def convert(grid):
                          fmt_time(field(r, ["Estimated Pickup Time"])), fmt_time(field(r, ["Appointment Time"])),
                          POLYGON, field(r, ["Passenger Phone"]), field(r, ["Pickup Address"]), "NH", POLYGON,
                          field(r, ["Phone Number"]), field(r, ["Dropoff Address"]), "NH", "SUB",
-                         num(field(r, ["Estimated Distance (miles)"])), "CLI1", "TL1", 0, 0, 0,
+                         field(r, ["Estimated Distance (miles)"]), "CLI1", "TL1", 0, 0, 0,
                          field(r, ["Mobility"]), notes, notes, notes, 10])
     return rows, ("Leg export" if is_leg else "VA manifest"), warnings
 
@@ -258,19 +258,22 @@ def table_name_for(sheet):
 
 
 def write_loader(rows, sheet, path):
-    wb = Workbook()
-    ws = wb.active
-    ws.title = sheet
-    ws.append(COLUMNS)
-    for r in rows:
-        ws.append(r)
-    end = f"Z{len(rows) + 1}"
-    tbl = Table(displayName=table_name_for(sheet), ref=f"A1:{end}")
-    tbl.tableStyleInfo = TableStyleInfo(name="TableStyleMedium7", showRowStripes=True)
-    ws.add_table(tbl)
+    """Saved with XlsxWriter so the file is laid out like one Excel saves (shared strings),
+    which upload sites such as Dispatch City expect."""
+    wb = xlsxwriter.Workbook(path)
+    ws = wb.add_worksheet(sheet)
+    ws.add_table(0, 0, len(rows), len(COLUMNS) - 1, {
+        "name": table_name_for(sheet),
+        "style": "Table Style Medium 7",
+        "columns": [{"header": c} for c in COLUMNS],
+        "data": [[None if v is None else v for v in r] for r in rows],
+    })
     for i, w in enumerate(WIDTHS):
-        ws.column_dimensions[ws.cell(1, i + 1).column_letter].width = w
-    wb.save(path)
+        ws.set_column(i, i, w)
+    try:
+        wb.close()
+    except xlsxwriter.exceptions.FileCreateError as e:
+        raise PermissionError(str(e)) from e
 
 
 def free_path(path):
