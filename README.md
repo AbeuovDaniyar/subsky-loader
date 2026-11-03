@@ -23,6 +23,7 @@ If the file you're saving over is open in Excel, it tells you to close it or pic
 ## What it does
 
 - Reads either the leg export (`Leg ID/Leg #`, `Passenger Name`, `Requested PickUp Time`, …) or the VA manifest (`Passenger`, `Estimated Pickup Time`, …) format. Header matching ignores case, spaces and punctuation.
+- Fills **Booking Id** from `Leg ID/Leg #` (or a `Trip ID` column) as `1-<trip #>-<leg>`, e.g. `896699 / Leg-A` → `1-896699-A`. If there's no ID column it numbers the trips 1, 2, 3… and says so.
 - Removes commas from passenger names, turns times like `12:00 EST` or `2:30 PM` into `12:00` / `14:30`.
 - Fills the fixed fields (Hartford County polygon, NH, SUB, CLI1, TL1, status 10, zero costs).
 - Writes a formatted Excel table (TableStyleMedium7) on a sheet named after the file, e.g. `Sub Sky 4th`.

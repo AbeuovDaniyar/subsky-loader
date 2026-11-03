@@ -177,6 +177,19 @@ def num(v):
         return str(v).strip()
 
 
+def booking_id_from(v):
+    """'896699 / Leg-A' -> '1-896699-A'. Already-formatted IDs and anything unrecognised are kept as typed."""
+    if blank(v):
+        return None
+    s = str(v).strip()
+    if re.fullmatch(r"\d+-\d+-[A-Za-z]", s):
+        return s.upper()
+    m = re.search(r"(\d+)\D*?(?:leg\s*[-#:]?\s*([A-Za-z])\b|[-/\s]([A-Za-z])$)", s, flags=re.I)
+    if not m:
+        return s
+    return f"1-{m.group(1)}-{(m.group(2) or m.group(3)).upper()}"
+
+
 def convert(grid):
     """Returns (rows, format_name, warnings)."""
     known = {"legidleg#", "passengername", "name", "putime", "passenger", "pickupaddress", "contractname"}
@@ -201,11 +214,16 @@ def convert(grid):
             else [["Passenger"], ["Estimated Pickup Time"], ["Pickup Address"], ["Dropoff Address"]])
     warnings = [f'Column "{alts[0]}" not found, so that field is empty.' for alts in need if not any(has(a) for a in alts)]
 
+    trip_id_cols = ["Leg ID/Leg #", "Leg ID", "Leg #", "Trip ID", "Trip #", "Trip Number", "Booking Id", "Booking ID"]
+    if not any(has(n) for n in trip_id_cols):
+        warnings.append('No "Leg ID/Leg #" or "Trip ID" column, so Booking Id is numbered 1, 2, 3...')
+
     rows = []
     for i, r in enumerate(records):
+        booking_id = booking_id_from(field(r, trip_id_cols)) or i + 1
         if is_leg:
             phone = field(r, ["Passenger Phone"])
-            rows.append([0, i + 1, field(r, ["Vehicle Plate"]), clean_name(field(r, ["Passenger Name", "Name"])),
+            rows.append([0, booking_id, field(r, ["Vehicle Plate"]), clean_name(field(r, ["Passenger Name", "Name"])),
                          fmt_time(field(r, ["Requested PickUp Time", "P/U Time"])), None, POLYGON, phone,
                          field(r, ["Pickup Address", "P/U Address"]), "NH", POLYGON, phone,
                          field(r, ["Dropoff Address", "D/O Address"]), "NH", "SUB",
@@ -213,7 +231,7 @@ def convert(grid):
                          field(r, ["Seating Need"]), field(r, ["Leg Notes"]), None, None, 10])
         else:
             notes = field(r, ["VA Notes"])
-            rows.append([0, i + 1, field(r, ["Contract Name"]), field(r, ["Passenger"]),
+            rows.append([0, booking_id, field(r, ["Contract Name"]), field(r, ["Passenger"]),
                          fmt_time(field(r, ["Estimated Pickup Time"])), fmt_time(field(r, ["Appointment Time"])),
                          POLYGON, field(r, ["Passenger Phone"]), field(r, ["Pickup Address"]), "NH", POLYGON,
                          field(r, ["Phone Number"]), field(r, ["Dropoff Address"]), "NH", "SUB",
