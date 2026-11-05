@@ -6,6 +6,8 @@ Turns the daily **GT Trips** export (.xlsx or .csv) into the Sub Sky loader work
 
 Get **SubSkyLoader.exe** from the [latest release](../../releases/latest). No install needed.
 
+If Windows Defender blocks the .exe (a known false alarm for single-file Python apps), download **SubSkyLoader-folder.zip** instead, unzip it, and run `SubSkyLoader.exe` inside the folder. Keep the `_internal` folder next to it.
+
 The first time, Windows may show "Windows protected your PC" because the app isn't signed. Click **More info → Run anyway**.
 
 ## Use
@@ -34,7 +36,8 @@ No data leaves the computer.
 
 ```
 python -m pip install -r requirements.txt
-pyinstaller --onefile --windowed --name SubSkyLoader subsky_loader.py
+pyinstaller --onefile --windowed --noupx --name SubSkyLoader --version-file version_info.txt subsky_loader.py
+pyinstaller --onedir --windowed --noupx --name SubSkyLoader --version-file version_info.txt subsky_loader.py
 ```
 
-The .exe is written to `dist\`.
+The first command makes the single `.exe`, the second the folder version. Both are written to `dist\`.
